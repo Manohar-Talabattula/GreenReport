@@ -2,143 +2,195 @@ const express = require("express");
 
 const router = express.Router();
 
-const Complaint = require("../models/Complaint");
+const Complaint =
+  require("../models/Complaint");
 
 const multer = require("multer");
 
 const cloudinary =
-require("../config/cloudinary");
+  require("cloudinary").v2;
 
 
-// MULTER STORAGE
+// CLOUDINARY CONFIG
 
-const storage = multer.diskStorage({});
+cloudinary.config({
 
-const upload = multer({
-    storage
+  cloud_name:
+    process.env.CLOUD_NAME,
+
+  api_key:
+    process.env.API_KEY,
+
+  api_secret:
+    process.env.API_SECRET
+
 });
 
 
-// POST COMPLAINT WITH IMAGE
+// MULTER
 
-router.post(
-    "/report",
-    upload.single("image"),
-    async (req, res) => {
+const storage =
+  multer.memoryStorage();
 
-        try {
-
-            let imageUrl = "";
-
-            // UPLOAD IMAGE TO CLOUDINARY
-
-            if (req.file) {
-
-                const result =
-                    await cloudinary.uploader.upload(
-                        req.file.path
-                    );
-
-                imageUrl =
-                    result.secure_url;
-
-            }
-
-            // SAVE COMPLAINT
-
-            const newComplaint =
-                new Complaint({
-
-                    name: req.body.name,
-
-                    pollutionType:
-                        req.body.pollutionType,
-
-                    location:
-                        req.body.location,
-
-                    description:
-                        req.body.description,
-
-                    image: imageUrl
-
-                });
-
-            await newComplaint.save();
-
-            res.status(201).json({
-                message:
-                    "Complaint Submitted Successfully ✅"
-            });
-
-        } catch (error) {
-
-            res.status(500).json({
-                error: error.message
-            });
-
-        }
-
-    }
-);
+const upload =
+  multer({
+    storage: storage
+  });
 
 
 // GET ALL COMPLAINTS
 
 router.get("/", async (req, res) => {
 
-    try {
+  try {
 
-        const complaints =
-            await Complaint.find();
+    const complaints =
+      await Complaint.find()
+      .sort({ createdAt: -1 });
 
-        res.status(200).json(
-            complaints
-        );
+    res.json(complaints);
 
-    } catch (error) {
+  } catch (error) {
 
-        res.status(500).json({
-            error: error.message
-        });
+    res.status(500).json({
+      message: error.message
+    });
 
-    }
+  }
 
 });
 
 
-// UPDATE COMPLAINT STATUS
+// REPORT COMPLAINT
 
-router.put("/:id", async (req, res) => {
+router.post(
+
+  "/report",
+
+  upload.single("image"),
+
+  async (req, res) => {
 
     try {
 
-        const updatedComplaint =
-            await Complaint.findByIdAndUpdate(
+      const {
 
-                req.params.id,
+        name,
 
-                {
-                    status: "Resolved"
-                },
+        pollutionType,
 
-                {
-                    new: true
-                }
+        location,
 
-            );
+        description
 
-        res.status(200).json(
-            updatedComplaint
-        );
+      } = req.body;
+
+      let imageUrl = "";
+
+      // IMAGE UPLOAD
+
+      if (req.file) {
+
+        const fileBase64 =
+          req.file.buffer.toString(
+            "base64"
+          );
+
+        const file =
+          `data:${req.file.mimetype};base64,${fileBase64}`;
+
+        const uploadedResponse =
+          await cloudinary.uploader.upload(
+            file,
+            {
+              folder:
+                "greenreport"
+            }
+          );
+
+        imageUrl =
+          uploadedResponse.secure_url;
+
+      }
+
+      // SAVE COMPLAINT
+
+      const complaint =
+        new Complaint({
+
+          name,
+
+          pollutionType,
+
+          location,
+
+          description,
+
+          image: imageUrl,
+
+          status: "Pending"
+
+        });
+
+      await complaint.save();
+
+      res.status(201).json({
+
+        message:
+          "Complaint Submitted Successfully"
+
+      });
 
     } catch (error) {
 
-        res.status(500).json({
-            error: error.message
-        });
+      console.log(error);
+
+      res.status(500).json({
+
+        message:
+          "Server Error"
+
+      });
 
     }
+
+  }
+
+);
+
+
+// RESOLVE COMPLAINT
+
+router.put("/:id", async (req, res) => {
+
+  try {
+
+    const updatedComplaint =
+      await Complaint.findByIdAndUpdate(
+
+        req.params.id,
+
+        {
+          status: "Resolved"
+        },
+
+        {
+          new: true
+        }
+
+      );
+
+    res.json(updatedComplaint);
+
+  } catch (error) {
+
+    res.status(500).json({
+
+      message: error.message
+
+    });
+
+  }
 
 });
 
@@ -147,24 +199,28 @@ router.put("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
 
-    try {
+  try {
 
-        await Complaint.findByIdAndDelete(
-            req.params.id
-        );
+    await Complaint.findByIdAndDelete(
+      req.params.id
+    );
 
-        res.status(200).json({
-            message:
-                "Complaint Deleted Successfully"
-        });
+    res.json({
 
-    } catch (error) {
+      message:
+        "Complaint Deleted Successfully"
 
-        res.status(500).json({
-            error: error.message
-        });
+    });
 
-    }
+  } catch (error) {
+
+    res.status(500).json({
+
+      message: error.message
+
+    });
+
+  }
 
 });
 
