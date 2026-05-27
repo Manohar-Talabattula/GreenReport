@@ -237,69 +237,57 @@ function App() {
 
   const handleSubmit = async (e) => {
 
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
+    try {
 
-    const complaintData =
-      new FormData();
+      const complaintData =
+        new FormData();
 
-    complaintData.append(
-      "name",
-      formData.name
-    );
+      complaintData.append(
+        "name",
+        formData.name
+      );
 
-    complaintData.append(
-      "pollutionType",
-      formData.pollutionType
-    );
+      complaintData.append(
+        "pollutionType",
+        formData.pollutionType
+      );
 
-    complaintData.append(
-      "location",
-      formData.location
-    );
+      complaintData.append(
+        "location",
+        formData.location
+      );
 
-    complaintData.append(
-      "description",
-      formData.description
-    );
-
-    // IMAGE
-
-    if (formData.image) {
+      complaintData.append(
+        "description",
+        formData.description
+      );
 
       complaintData.append(
         "image",
         formData.image
       );
 
-    }
+      const response =
+        await fetch(
 
-    const response =
-      await fetch(
+          "https://greenreport.onrender.com/api/complaints/report",
 
-        "https://greenreport.onrender.com/api/complaints/report",
+          {
 
-        {
+            method: "POST",
 
-          method: "POST",
+            body: complaintData
 
-          body: complaintData
+          }
 
-        }
+        );
 
-      );
+      const data =
+        await response.json();
 
-    const data =
-      await response.json();
-
-    console.log(data);
-
-    if (response.ok) {
-
-      alert(
-        "Complaint Submitted Successfully ✅"
-      );
+      alert(data.message);
 
       fetchComplaints();
 
@@ -317,29 +305,14 @@ function App() {
 
       });
 
-    }
+    } catch (error) {
 
-    else {
-
-      alert(
-        data.message
-      );
+      console.log(error);
 
     }
 
-  }
+  };
 
-  catch (error) {
-
-    console.log(error);
-
-    alert(
-      "Submission Failed"
-    );
-
-  }
-
-};
   // COUNTS
 
   const totalComplaints =
