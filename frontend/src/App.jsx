@@ -56,7 +56,7 @@ function App() {
     try {
 
       const response = await fetch(
-        "http://localhost:5000/api/complaints"
+        "https://greenreport.onrender.com/api/complaints"
       );
 
       const data = await response.json();
@@ -79,7 +79,7 @@ function App() {
 
       await fetch(
 
-        `http://localhost:5000/api/complaints/${id}`,
+        `https://greenreport.onrender.com/api/complaints/${id}`,
 
         {
           method: "PUT"
@@ -116,7 +116,7 @@ function App() {
 
       await fetch(
 
-        `http://localhost:5000/api/complaints/${id}`,
+        `https://greenreport.onrender.com/api/complaints/${id}`,
 
         {
           method: "DELETE"
@@ -237,57 +237,69 @@ function App() {
 
   const handleSubmit = async (e) => {
 
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
+  try {
 
-      const complaintData =
-        new FormData();
+    const complaintData =
+      new FormData();
 
-      complaintData.append(
-        "name",
-        formData.name
-      );
+    complaintData.append(
+      "name",
+      formData.name
+    );
 
-      complaintData.append(
-        "pollutionType",
-        formData.pollutionType
-      );
+    complaintData.append(
+      "pollutionType",
+      formData.pollutionType
+    );
 
-      complaintData.append(
-        "location",
-        formData.location
-      );
+    complaintData.append(
+      "location",
+      formData.location
+    );
 
-      complaintData.append(
-        "description",
-        formData.description
-      );
+    complaintData.append(
+      "description",
+      formData.description
+    );
+
+    // IMAGE
+
+    if (formData.image) {
 
       complaintData.append(
         "image",
         formData.image
       );
 
-      const response =
-        await fetch(
+    }
 
-          "http://localhost:5000/api/complaints/report",
+    const response =
+      await fetch(
 
-          {
+        "https://greenreport.onrender.com/api/complaints/report",
 
-            method: "POST",
+        {
 
-            body: complaintData
+          method: "POST",
 
-          }
+          body: complaintData
 
-        );
+        }
 
-      const data =
-        await response.json();
+      );
 
-      alert(data.message);
+    const data =
+      await response.json();
+
+    console.log(data);
+
+    if (response.ok) {
+
+      alert(
+        "Complaint Submitted Successfully ✅"
+      );
 
       fetchComplaints();
 
@@ -305,14 +317,29 @@ function App() {
 
       });
 
-    } catch (error) {
+    }
 
-      console.log(error);
+    else {
+
+      alert(
+        data.message
+      );
 
     }
 
-  };
+  }
 
+  catch (error) {
+
+    console.log(error);
+
+    alert(
+      "Submission Failed"
+    );
+
+  }
+
+};
   // COUNTS
 
   const totalComplaints =
