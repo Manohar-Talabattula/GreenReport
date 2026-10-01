@@ -1,93 +1,52 @@
 const express = require("express");
-
 const mongoose = require("mongoose");
-
 const cors = require("cors");
-
 const dotenv = require("dotenv");
 
-const complaintRoutes =
-  require("./routes/complaintRoutes");
-
+// Load environment variables FIRST
 dotenv.config();
+
+const complaintRoutes = require("./routes/complaintRoutes");
 
 const app = express();
 
-
-// CORS FIX
-
+// CORS
 app.use(
-
   cors({
-
     origin: "*"
-
   })
-
 );
 
-
-// BODY PARSER
-
+// Body parser
 app.use(express.json());
-
-app.use(express.urlencoded({
-  extended: true
-}));
-
-
-// ROUTES
-
 app.use(
-  "/api/complaints",
-  complaintRoutes
+  express.urlencoded({
+    extended: true
+  })
 );
 
+// Routes
+app.use("/api/complaints", complaintRoutes);
 
-// TEST ROUTE
-
+// Home route
 app.get("/", (req, res) => {
-
-  res.send(
-    "GreenReport Backend Running 🚀"
-  );
-
+  res.send("GreenReport Backend Running 🚀");
 });
 
+const PORT = process.env.PORT || 5000;
 
-// MONGODB CONNECTION
+// Start server only after MongoDB connects
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("MongoDB Connected ✅");
 
-mongoose.connect(
-  process.env.MONGO_URI
-)
-
-.then(() => {
-
-  console.log(
-    "MongoDB Connected ✅"
-  );
-
-})
-
-.catch((error) => {
-
-  console.log(error);
-
-});
-
-
-// PORT
-
-const PORT =
-  process.env.PORT || 5000;
-
-
-// START SERVER
-
-app.listen(PORT, () => {
-
-  console.log(
-    `Server running on port ${PORT}`
-  );
-
-});
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error("MongoDB Connection Error ❌");
+    console.error(error);
+    process.exit(1);
+  });
